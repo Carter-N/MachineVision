@@ -1,23 +1,19 @@
-body {
+/* Page styles */
+body{
   font-family: Helvetica, sans-serif;
   background-color: #d3d3d3;
 }
-h2, h3 {
-  margin-top:0;
+
+/* Page structure */
+#camera-container{
+  maring-top:20%;
 }
-form {
-  margin-top: 15px;
+
+#drawing-container{
+  maring-top:20%;
 }
-form > input {
-  margin-right: 15px;
-}
-#results {
-  float:right;
-  margin:20px;
-  padding:20px;
-  border:1px solid;
-  background:#ccc;
-}
+
+/* Canvases */
 canvas{
   border-style: solid;
 }
