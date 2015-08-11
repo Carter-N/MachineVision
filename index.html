@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+
+    <!--Meta data-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Webcam Drawing</title>
+
+    <!--Page styling-->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    </style>
+  </head>
+  <body>
+
+    <!--Image capture pane-->
+    <center>
+      <div>
+        <div id="page-left">
+          <h1>Camera stream</h1>
+
+          <!--Live camera feed-->
+          <div id="my_camera"></div>
+        </div>
+        <div id="page-right">
+          <!--Drawing panel-->
+          <h1>Buffered image</h1>
+          <canvas id="my_drawing"></canvas>
+        </div>
+      </div>
+      <div stlye="float:right;">
+
+        <!--Drawing space-->
+        <canvas id="drawing"></canvas>
+      </div>
+    </div>
+
+    <!--Include libraries-->
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="webcam.js"></script>
+    <script language="JavaScript">
+      $(function(){
+
+        //Setup the camera
+        Webcam.set({
+          width: 320,
+          height: 240,
+          image_format: 'jpeg',
+          jpeg_quality: 90,
+          flip_horiz: true
+        });
+
+        //Begin streaming
+        Webcam.attach("#my_camera");
+
+        //Pen variables
+        var pixelTolerance = 10;
+        var colorTolerance = 30;
+        var isPresent = false;
+        var penColor = {};
+
+        //Canvas
+        var canvas = document.getElementById("my_drawing");
+        var ctx = canvas.getContext("2d");
+        canvas.width = 320;
+        canvas.height = 240;
+
+        //Drawing canvas
+        var drawing = document.getElementById("drawing");
+        var drawCtx = drawing.getContext("2d");
+        drawing.width = 320;
+        drawing.height = 240;
+
+        //Drawing variables
+        var lastX = 0;
+        var lastY = 0;
+
+        //Color picker
+        $("#my_drawing").mousedown(function(event){
+
+          //Positon of canvas and mouse relative to canvas
+          var position = $(this).position();
+          var x = event.pageX - position.left;
+          var y = event.pageY - position.top;
+
+          //Get pixel data
+          var data = ctx.getImageData(x, y, 1, 1);
+
+          var color = {
+            red: data.data[0],
+            green: data.data[1],
+            blue: data.data[2],
+            alpha: data.data[3]
+          };
+
+          //Color was successfully chosen
+          penColor = color;
+          console.log("color chosen", color, x, y);
+        });
+
+        //Find the pen if it is present on image
+        var trackPen = function(){
+
+          //Update and manipulate the webcam image
+          Webcam.snap(function(){
+
+            //Get the canvas data and update the image there
+            var data = ctx.getImageData(0, 0, 320, 240);
+
+            //The color of the object
+            var color = {
+              red: penColor.red, green: penColor.green, blue: penColor.blue, alpha: penColor.alpha
+            };
+
+            var framePixels = 0;
+
+            //Pixel dictionaies
+            var dataX = [];
+            var dataY = [];
+
+            //Loop through the image and get the pixels close to the wanted color
+            for(var x = 0; x < data.width; x++){
+              for(var y = 0; y < data.height; y++){
+
+                //Get color components of pixel
+                var red = data.data[((x * (data.width * 4)) + (y * 4))];
+                var green = data.data[((x * (data.width * 4)) + (y * 4)) + 1];
+                var blue = data.data[((x * (data.width * 4)) + (y * 4)) + 2];
+                var alpha = data.data[((x * (data.width * 4)) + (y * 4)) + 3];
+
+                if(red < color.red + colorTolerance && red > color.red - colorTolerance &&
+                green < color.green + colorTolerance && green > color.green - colorTolerance &&
+                blue < color.blue + colorTolerance && blue > color.blue - colorTolerance){
+
+                  //data.data[((x * (data.width * 4)) + (y * 4))] = 231;
+                  //data.data[((x * (data.width * 4)) + (y * 4)) + 1] = 76;
+                  //data.data[((x * (data.width * 4)) + (y * 4)) + 2] = 60;
+                  //data.data[((x * (data.width * 4)) + (y * 4)) + 3] = 1.0;
+                  framePixels++;
+
+                  dataX.push(x);
+                  dataY.push(y);
+                }
+              }
+            }
+
+            //Calculate center
+            if(dataX.length > 0){
+
+              dataX.sort();
+              dataY.sort();
+
+              var centerX = dataX[Math.floor(dataX.length / 2)];
+              var centerY = dataY[Math.floor(dataY.length / 2)];
+
+              //Paint new data
+              for(var x = centerX; x < centerX + 10; x++){
+                for(var y = centerY; y < centerY + 10; y++){
+                  data.data[((x * (data.width * 4)) + (y * 4))] = 231;
+                  data.data[((x * (data.width * 4)) + (y * 4)) + 1] = 76;
+                  data.data[((x * (data.width * 4)) + (y * 4)) + 2] = 60;
+                  data.data[((x * (data.width * 4)) + (y * 4)) + 3] = 1.0;
+                }
+              }
+              ctx.putImageData(data, 0, 0);
+
+              //Draw to drawing
+              drawCtx.beginPath();
+              drawCtx.moveTo(lastY, lastX);
+              drawCtx.lineTo(centerY, centerX);
+              drawCtx.stroke();
+
+              lastX = centerX;
+              lastY = centerY;
+            }
+          }, canvas);
+        }
+
+        //Update the drawing when the webcam finishes loading
+        Webcam.on("load", function(){
+          var loop = setInterval(function(){trackPen()}, 100);
+        });
+      });
+    </script>
+  </body>
+</html>
