@@ -7,10 +7,12 @@ body{
 /* Page structure */
 #camera-container{
   maring-top:20%;
+  background-color: #d3d3d3;
 }
 
 #drawing-container{
   maring-top:20%;
+  background-color: #d3d3d3;
 }
 
 /* Canvases */

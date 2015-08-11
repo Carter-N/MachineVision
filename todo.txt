@@ -1,0 +1,5 @@
+-Change algorithm to differenciate between objects
+-Change algorithm to choose most prominent object
+-Make canvas bigger
+-Make drawing algorithm use bezier curves in place of lines
+-Add different colors
