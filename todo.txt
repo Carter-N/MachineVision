@@ -1,5 +1,5 @@
--Change algorithm to differenciate between objects
--Change algorithm to choose most prominent object
+-Change algorithm to detect different objects and then pick most likely object to track
 -Make canvas bigger
--Make drawing algorithm use bezier curves in place of lines
--Add different colors
+-Make drawing color match selected pen color
+-Add box and pointer to select color
+-Fix resolution issue with part of image not rendering correctly

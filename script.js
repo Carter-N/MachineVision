@@ -1,55 +1,53 @@
-//When the page loads
 $(function(){
 
   //Image resolution
-  var width = 320;
-  var height = 240;
+  var image = {
+    width: 320,
+    height: 240
+  };
+  setupCamera();
 
-  //Setup camera
-  Webcam.set({
-    width: width, height: height,
-    image_format: 'jpeg', jpeg_quality: 90,
-    flip_horiz: true
-  });
-
-  //Begin streaming
+  //Begin streaming camera
   Webcam.attach("#camera");
 
   //Pen variables
-  var pixelTolerance = 10;
-  var colorTolerance = 30;
-  var draw = false;
-  var penColor = {};
+  var pen = {
+    colorTolerance: 30,
+    objectTolerance: 100,
+    drawing: false,
+    color: {},
+    lastPosition: {
+      x: -1,
+      y: -1
+    }
+  };
 
-  //Pen position
-  var lastX;
-  var lastY;
-
-  //Buffer canvas
-  var canvas = document.getElementById("buffer-camera");
-  var ctx = canvas.getContext("2d");
-  canvas.width = width;
-  canvas.height = height;
+  //Camera buffer canvas
+  var buffer = document.getElementById("buffer-camera");
+  var bufferCtx = buffer.getContext("2d");
+  buffer.width = image.width;
+  buffer.height = image.height;
 
   //Drawing canvas
   var drawing = document.getElementById("drawing");
-  var drawCtx = drawing.getContext("2d");
-  drawing.width = width;
-  drawing.height = height;
+  var drawingCtx = drawing.getContext("2d");
+  drawing.width = image.width;
+  drawing.height = image.height;
 
-  //Setup pen
-  drawCtx.lineWidth = 1;
-  drawCtx.lineJoin = drawCtx.lineCap = 'round';
+  setupPen();
 
-  //Detect if the user wants to draw
+  //Toggle drawing event
   $("body").keydown(function(event){
-    console.log("drawing: ", draw);
-    draw = !draw;
 
-    //Destroy last pos if stopped drawing
-    if(draw === false){
-      lastX = -1;
-      lastY = -1;
+    //TODO: set a element color based on draw status
+
+    //Toggle drawing
+    pen.drawing = !pen.drawing;
+
+    //Forget last position if not drawing
+    if(pen.drawing === false){
+      pen.lastPosition.x = -1;
+      pen.lastPosition.y = -1;
     }
   });
 
@@ -78,7 +76,7 @@ $(function(){
     Webcam.snap(function(){
 
       //Get the buffer data
-      var data = ctx.getImageData(0, 0, 320, 240);
+      var data = ctx.getImageData(0, 0, width, height);
 
       //Number of matches this frame
       var framePixels = 0;
@@ -123,6 +121,8 @@ $(function(){
         dataX.sort();
         dataY.sort();
 
+        //Calculate different objects
+
         //Calculate medians of data
         var centerX = dataX[Math.floor(dataX.length / 2)];
         var centerY = dataY[Math.floor(dataY.length / 2)];
@@ -164,4 +164,17 @@ $(function(){
       trackPen();
     }, 50);
   });
+
+  var setupWebcam = function(){
+
+    //Setup camera
+    Webcam.set({
+      width: image.width, height: image.height, image_format: 'jpeg', jpeg_quality: 90, flip_horiz: true
+    });
+  };
+
+  var setupPen = function(){
+    drawingCtx.lineWidth = 2;
+    drawingCtx.lineJoin = drawingCtx.lineCap = 'round';
+  };
 });
